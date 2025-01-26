@@ -13,8 +13,8 @@ public class StudentManagementApplication {
 		SpringApplication.run(StudentManagementApplication.class, args);
 	}
 
-	@GetMapping("/good-mornig")
-	public  String goodMorning() {
-		return "Good Morning, World!";
+	@GetMapping("/hello")
+	public  String hello() {
+		return "Hello, World!";
 	}
 }
