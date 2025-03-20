@@ -7,11 +7,11 @@ import lombok.Setter;
 @Setter
 public class Student {
 
-  private String student_id;
+  private String studentId;
   private String name;
-  private String kana_name;
+  private String kanaName;
   private String nickname;
-  private String e_mail;
+  private String email;
   private String area;
   private int age;
   private String gender;
