@@ -1,0 +1,94 @@
+■第14回_08_実際に構築するWebアプリの解説とテーブル設計
+＜システム設計＞
+■受講生管理システム
+　・目的
+　　技術的な講座を受講する人（受講生）の個人情報や何のコースを受けたかを管理したい。
+　
+　・要件
+　　・受講生の個人情報を管理できること
+　　　　　受講生情報を検索、登録、更新、削除が出来ること
+　　・受講生が何のコースを受けたかを管理できること
+　　　　　受講生のコース情報を検索、登録、更新、削除ができること
+　　・受講生とコースの関係は1:多である。複数コースの受講を考慮すること。
+　　　受講生（1）：コース（N）
+　　・これらの情報を画面上で確認できること　or 画面に連携するためのデータを返せること
+　　・受講生のコース情報を一括変更できること
+　・技術要件
+　　・Javaで開発すること
+　　・SpringBootを使って開発すること
+　　・MySQLを使うこと
+　・機能
+　　・受講生情報（コース含む）を管理する機能
+　・仕様
+　　・受講生情報の定義
+　　　　　ID ：VARCHAR
+　　　　　名前（フルネーム） ：VARCHAR
+　　　　　フリガナ ：VARCHAR
+　　　　　ニックネーム ：VARCHAR
+          メールアドレス　：　VARCHAR
+　　　　　住んでいる地域（市区町村）： VARCHAR
+　　　　　年齢 ：int
+　　　　　性別（トランスジェンダー考慮） ：VARCHAR
+　　　・受講生コースの情報の定義
+　　　　　ID ：VARCHAR
+　　　　　受講生情報のID ：VARCHAR
+　　　　　コース名 ：VARCHAR
+　　　　　受講開始日 ：日付型（タイムテーブル）
+　　　　　受講修了予定日 ：日付型（タイムテーブル）
+　　　・DB設計
+　　　　　テーブルの構成
+　　　　　　受講生情報
+　　　　　　受講生コース
+　　　　　　受講生と受講生コースは関連有り
+　　　　　　1:Nの関係
+
+■課題08　以下を作成（上記仕様を参照）
+受講生テーブル：students
+受講生コーステーブル：students_courses
+
+SQLで確認したものを出す。
+SHOW TABLES;で確認できる。
+SHOW CREATE TABLE students_courses;　でクリエイト文を見れる。それを提出するのでもOK。
+DESC students;
+DESC students_courses;
+
+■課題08の再考
+受講生テーブル：students
+　　　　　ID　：　student_id, VARCHAR(36), PR, NOT NULL
+　　　　　名前（フルネーム） ：name, VARCHAR(100), NOT NULL
+　　　　　フリガナ ： kana_name, VARCHAR(100), NOT NULL
+　　　　　ニックネーム ：nickname, VARCHAR(100)
+　　　　　Eメール： e_mail, VARCHAR(300), NOT NULL, UNIQUE
+　　　　　住んでいる地域（市区町村）： area, VARCHAR(100)
+　　　　　年齢 ：age, int
+　　　　　性別（トランスジェンダー考慮） ：gender, VARCHAR(30)
+
+受講生コーステーブル：students_courses
+　　　　　ID ：course_id, VARCHAR(36), PR, NOT NULL
+　　　　　受講生情報のID ：student_id, VARCHAR(36), FOREIGN KEY, NOT NULL
+　　　　　コース名 ：course_name, VARCHAR(100), NOT NULL
+　　　　　受講開始日 ：start_date, DATE, NOT NULL
+　　　　　受講修了予定日 ：end_date, DATE 　　　　　　　　　　　　　　　　　　　　　　　←NULL 許可にして、未定の場合にも対応できるようにする。
+          FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE　 ←students_courses の FOREIGN KEY (student_id) に ON DELETE CASCADE をつけると、受講生が削除されたときに関連データも自動削除されるようにする。
+
+■課題08の実際のコード
+CREATE TABLE students (
+ student_id VARCHAR(36) PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ kana_name VARCHAR(100) NOT NULL,
+ nickname VARCHAR(100),
+ e_mail VARCHAR(300) NOT NULL UNIQUE,
+ area VARCHAR(100),
+ age INT,
+ gender VARCHAR(30)
+);
+
+
+CREATE TABLE students_courses (
+ course_id VARCHAR(36) PRIMARY KEY,
+ student_id VARCHAR(36) NOT NULL,
+ course_name VARCHAR(100) NOT NULL,
+ start_date DATE NOT NULL,
+ end_date DATE,
+ FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+);
