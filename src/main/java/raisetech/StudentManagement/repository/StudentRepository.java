@@ -13,11 +13,20 @@ import raisetech.StudentManagement.data.StudentsCourses;
 @Mapper
 public interface StudentRepository {
 
-  @Select("SELECT * FROM students")
+  //キャンセルされた受講生は表示しない条件を追加
+  @Select("SELECT * FROM students WHERE is_deleted = false")
   List<Student> searchStudents();
+
+  //IDに紐づいた学生を検索
+  @Select("SELECT * FROM students WHERE id = #{id}")
+  Student searchStudentById(int id);
 
   @Select("SELECT * FROM students_courses")
   List<StudentsCourses> searchStudentsCourse();
+
+  //IDに紐づいた受講コースを検索
+  @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
+  List<StudentsCourses> searchStudentsCoursesByStudentId(int studentId);
 
   @Insert("""
   INSERT INTO students (
@@ -41,24 +50,21 @@ public interface StudentRepository {
   @Options(useGeneratedKeys = true, keyProperty = "id")
   void insertStudentsCourse(StudentsCourses studentsCourses);
 
-  //IDに紐づいた学生を検索
-  @Select("SELECT * FROM students WHERE id = #{id}")
-  Student searchStudentById(int id);
-
-  @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
-  List<StudentsCourses> searchStudentsCoursesByStudentId(int studentId);
-
   // UPDATE文（updateStudent用）
   @Update("""
   UPDATE students SET
     name = #{name}, kana_name = #{kanaName}, nickname = #{nickname}, e_mail = #{email},
     area = #{area}, age = #{age}, gender = #{gender},
-    telephone_number = #{telephoneNumber}, remarks = #{remarks}
+    telephone_number = #{telephoneNumber}, remarks = #{remarks}, is_deleted = #{deleted}
   WHERE id = #{id}
   """)
   void updateStudent(Student student);
 
-  //UPDATE文（コース情報の削除→再登録）
-  @Delete("DELETE FROM students_courses WHERE student_id = #{studentId}")
-  void deleteStudentsCoursesByStudentId(int studentId);
+  // UPDATE文（updateStudentCourse用）
+  @Update("""
+  UPDATE students_courses SET
+    course_name =  #{courseName}
+  WHERE id = #{id}
+  """)
+  void updateStudentsCourse(StudentsCourses studentsCourses);
 }
