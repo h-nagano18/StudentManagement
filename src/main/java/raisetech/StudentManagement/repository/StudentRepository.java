@@ -50,7 +50,7 @@ public interface StudentRepository {
   @Options(useGeneratedKeys = true, keyProperty = "id")
   void insertStudentsCourse(StudentsCourses studentsCourses);
 
-  // UPDATE文（updateStudent用）
+  // UPDATE文（updateStudent用のコード）
   @Update("""
   UPDATE students SET
     name = #{name}, kana_name = #{kanaName}, nickname = #{nickname}, e_mail = #{email},
@@ -60,7 +60,7 @@ public interface StudentRepository {
   """)
   void updateStudent(Student student);
 
-  // UPDATE文（updateStudentCourse用）
+  // UPDATE文（updateStudentCourse用のコード）
   @Update("""
   UPDATE students_courses SET
     course_name =  #{courseName}
