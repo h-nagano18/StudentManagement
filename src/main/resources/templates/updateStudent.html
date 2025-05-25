@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>受講生更新</title>
+  <title>受講生詳細</title>
 </head>
 <body>
-<h1>受講生更新</h1>
-<form th:action="@{updateStudent}" th:object="${studentDetail}" method="post">
+<h1>受講生詳細</h1>
+<form th:action="@{/updateStudent}" th:object="${studentDetail}" method="post">
   <!-- hiddenでIDを渡す -->
   <input type="hidden" th:field="*{student.id}" />
   <div>
@@ -44,10 +44,21 @@
     <label for="remarks">備考：</label>
     <input type="text" id="remarks" th:field="*{student.remarks}" />
   </div>
+  <!-- キャンセルボックスの作成 -->
+  <div>
+    <label for="deleted">キャンセル:</label>
+    <input type="checkbox" id="deleted" th:field="*{student.deleted}" />
+  </div>
 
-  <!-- コース情報（courseNameのみ） -->
+  <!-- コース情報（courseID・courseNameのみ） -->
   <div>
     <div th:each="course, stat : *{studentsCourses}">
+      <label for="id"
+             th:for="studentCourse.__${stat.index}__.id">受講コースID:</label>
+      <input type="text"
+             id="id"
+             th:id="'studentCourse__${stat.index}__.id'"
+             th:field="*{studentsCourses[__${stat.index}__].id}" />
       <label for="courseName"
              th:for="studentCourse.__${stat.index}__.courseName">受講コース名:</label>
       <input type="text"
@@ -62,7 +73,7 @@
     <div th:if="${errorMessage}" style="color: red;">
       <p th:text="${errorMessage}"></p>
     </div>
-
+  </div>
 </form>
 </body>
 </html>

@@ -8,8 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import raisetech.StudentManagement.contloller.converter.StudentConverter;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentsCourses;
@@ -35,6 +35,13 @@ public class StudentController {
 
     model.addAttribute("studentList", converter.convertStudentDetails(students, studentsCourses));
     return "studentList";
+  }
+  //IDで受講生情報を表示
+  @GetMapping("/student/{id}")
+  public String getStudent(@PathVariable int id, Model model) {
+    StudentDetail studentDetail = service.searchStudent(id);
+    model.addAttribute("studentDetail", studentDetail);
+    return "updateStudent";
   }
 
   @GetMapping("/studentsCourseList")
@@ -69,16 +76,12 @@ public class StudentController {
       return "registerStudent";
     }
   }
-  @GetMapping("/editStudent")
-  public String editStudent(@RequestParam("id") int id, Model model) {
-    StudentDetail studentDetail = service.getStudentDetailById(id);
-    model.addAttribute("studentDetail", studentDetail);
-    return "updateStudent";
-  }
 
   @PostMapping("/updateStudent")
-  public String updateStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result,
-      Model model) {
+  public String updateStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result, Model model) {
+    if(result.hasErrors()){
+      return "updateStudent";
+    }
       service.updateStudent(studentDetail);
       return "redirect:/studentList";
     }

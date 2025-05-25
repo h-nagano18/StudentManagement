@@ -26,19 +26,14 @@ public class StudentService {
     return repository.searchStudents();
   }
 
-  public List<StudentDetail> searchStudentDetailList() {
-    List<Student> students = repository.searchStudents();
-    List<StudentDetail> details = new ArrayList<>();
-
-    for (Student student : students) {
-      List<StudentsCourses> courses = repository.searchStudentsCoursesByStudentId(student.getId());
-      StudentDetail detail = new StudentDetail();
-      detail.setStudent(student);
-      detail.setStudentsCourses(courses);
-      details.add(detail);
-    }
-
-    return details;
+  //IDに紐づく受講生情報と受講コース名の取得
+  public StudentDetail searchStudent(int id) {
+    Student student = repository.searchStudentById(id);
+    List<StudentsCourses> studentsCourses = repository.searchStudentsCoursesByStudentId(student.getId());
+    StudentDetail studentDetail = new StudentDetail();
+    studentDetail.setStudent(student);
+    studentDetail.setStudentsCourses(studentsCourses);
+    return studentDetail;
   }
 
   public List<StudentsCourses> searchStudentsCourseList() {
@@ -60,52 +55,12 @@ public class StudentService {
     }
   }
 
-  @Transactional
-  public StudentDetail getStudentDetailById(int id) {
-    Student student = repository.searchStudentById(id);
-    List<StudentsCourses> courses = repository.searchStudentsCoursesByStudentId(id);
-    StudentDetail detail = new StudentDetail();
-    detail.setStudent(student);
-    detail.setStudentsCourses(courses);
-    return detail;
-  }
-
+  // 受講生・コースの更新
   @Transactional
   public void updateStudent(StudentDetail studentDetail) {
-    // ① students テーブルは常に更新
-    Student student = studentDetail.getStudent();
-    //更新対象の確認
-    System.out.println("Taget updated studentId: " + studentDetail.getStudent().getId());
     repository.updateStudent(studentDetail.getStudent());
-
-    // 現在のDBにあるコース情報と比較
-    int studentId = studentDetail.getStudent().getId();
-    List<StudentsCourses> dbCourses = repository.searchStudentsCoursesByStudentId(studentId);
-    List<StudentsCourses> inputCourses = studentDetail.getStudentsCourses();
-
-    if (!isSameCourses(dbCourses, inputCourses)) {
-      repository.deleteStudentsCoursesByStudentId(studentId);
-      for (StudentsCourses studentsCourse : inputCourses) {
-        studentsCourse.setStudentId(studentId);
-        studentsCourse.setStartDate(LocalDateTime.now());
-        studentsCourse.setEndDate(LocalDateTime.now().plusYears(1));
-        repository.insertStudentsCourse(studentsCourse);
-      }
+    for (StudentsCourses studentsCourse : studentDetail.getStudentsCourses()) {
+      repository.updateStudentsCourse(studentsCourse);
     }
-  }
-    // 差分があるか比較するヘルパーメソッド
-    private boolean isSameCourses(List<StudentsCourses> dbCourses, List<StudentsCourses> inputCourses) {
-      if (dbCourses.size() != inputCourses.size()) {
-        return false;
-     }
-
-     for (int i = 0; i < dbCourses.size(); i++) {
-        StudentsCourses db = dbCourses.get(i);
-       StudentsCourses input = inputCourses.get(i);
-        if (!Objects.equals(db.getCourseName(), input.getCourseName())) {
-          return false;
-        }
-    }
-    return true;
   }
 }
