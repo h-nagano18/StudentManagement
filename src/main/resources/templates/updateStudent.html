@@ -46,17 +46,17 @@
   </div>
   <!-- キャンセルボックスの作成 -->
   <div>
-    <label for="deleted">キャンセル:</label>
-    <input type="checkbox" id="deleted" th:field="*{student.deleted}" />
+    <label for="isDeleted">キャンセル:</label>
+    <input type="checkbox" id="isDeleted" th:field="*{student.deleted}" />
   </div>
 
   <!-- コース情報（courseID・courseNameのみ） -->
   <div>
     <div th:each="course, stat : *{studentsCourses}">
-      <label for="id"
+      <label for="studentCourseId"
              th:for="studentCourse.__${stat.index}__.id">受講コースID:</label>
       <input type="text"
-             id="id"
+             id="studentCourseId"
              th:id="'studentCourse__${stat.index}__.id'"
              th:field="*{studentsCourses[__${stat.index}__].id}" />
       <label for="courseName"

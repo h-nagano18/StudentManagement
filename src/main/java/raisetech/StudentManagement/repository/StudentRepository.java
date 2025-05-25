@@ -14,7 +14,7 @@ import raisetech.StudentManagement.data.StudentsCourses;
 public interface StudentRepository {
 
   //キャンセルされた受講生は表示しない条件を追加
-  @Select("SELECT * FROM students WHERE is_deleted = false")
+  @Select("SELECT * FROM students")
   List<Student> searchStudents();
 
   //IDに紐づいた学生を検索
