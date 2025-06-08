@@ -1,16 +1,18 @@
 package raisetech.StudentManagement.data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * 受講生コースを扱うオブジェクト。
+ */
 @Getter
 @Setter
-public class StudentsCourses {
+public class StudentCourse {
 
-  private int id;
-  private int studentId;
+  private String id;
+  private String studentId;
   private String courseName;
   private LocalDateTime startDate;
   private LocalDateTime endDate;
