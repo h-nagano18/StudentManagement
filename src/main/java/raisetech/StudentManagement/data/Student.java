@@ -1,5 +1,6 @@
 package raisetech.StudentManagement.data;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,8 @@ import lombok.Setter;
 @Setter
 public class Student {
 
+  @NotBlank
+  @Pattern(regexp = "^\\d+$")
   private String id;
 
   @NotBlank(message = "名前は必須です")
@@ -24,14 +27,21 @@ public class Student {
   @NotBlank(message = "カナ氏名は必須です")
   private String kanaName;
 
+  @NotBlank
   private String nickname;
+
+  @NotBlank
+  @Email
   private String email;
+
+  @NotBlank
   private String area;
 
   @Min(value = 10, message = "年齢は10歳以上で入力してください")
   @Max(value = 100, message = "年齢は100歳以下で入力してください")
   private int age;
 
+  @NotBlank
   private String gender;
 
   @Pattern(regexp = "^[0-9]{10,11}$", message = "電話番号は10桁または11桁の数字のみで入力してください")

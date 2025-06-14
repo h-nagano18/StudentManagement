@@ -2,9 +2,11 @@ package raisetech.StudentManagement.service;
 
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import raisetech.StudentManagement.contloller.converter.StudentConverter;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
@@ -94,5 +96,13 @@ public class StudentService {
     repository.updateStudent(studentDetail.getStudent());
     studentDetail.getStudentCourseList()
         .forEach(studentCourse -> repository.updateStudentCourse(studentCourse));
+  }
+
+  /**
+   * 例外処理の発生テスト用（Service）
+   * @return
+   */
+  public void errorFromService() {
+    throw new IllegalArgumentException("このリクエストはService内での不正です");
   }
 }

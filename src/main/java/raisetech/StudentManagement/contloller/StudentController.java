@@ -1,7 +1,8 @@
 package raisetech.StudentManagement.contloller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +46,8 @@ public class StudentController {
    * @return　受講生
    */
   @GetMapping("/student/{id}")
-  public StudentDetail getStudent(@PathVariable
-    @Size(min=1, max=3, message = "IDは1～999で入力してください")
-    String id) {
+  public StudentDetail getStudent(
+      @PathVariable @NotBlank @Pattern(regexp = "^\\d+$") String id) {
     return service.searchStudent(id);
   }
 
@@ -58,7 +58,8 @@ public class StudentController {
    * @return　実行結果
    */
   @PostMapping("/registerStudent")
-  public ResponseEntity<StudentDetail> registerStudent(@RequestBody @Valid StudentDetail studentDetail) {
+  public ResponseEntity<StudentDetail> registerStudent(
+      @RequestBody @Valid StudentDetail studentDetail) {
       StudentDetail responseStudentDetail = service.registerStudent(studentDetail);
       return ResponseEntity.ok(responseStudentDetail);
     }
@@ -73,5 +74,24 @@ public class StudentController {
   public ResponseEntity<String> updateStudent(@RequestBody @Valid StudentDetail studentDetail) {
     service.updateStudent(studentDetail);
     return ResponseEntity.ok("更新処理が成功しました。");
+  }
+
+  /**
+   * 例外処理の発生テスト用(Cntoroller)
+   * @return
+   */
+  @GetMapping("/triggerErrorController")
+  public ResponseEntity<String> triggerErrorController() {
+    throw new IllegalArgumentException("このリクエストはController内での不正です");
+  }
+
+  /**
+   * 例外処理の発生テスト用(Service)
+   * @return
+   */
+  @GetMapping("/triggerErrorService")
+  public ResponseEntity<String> triggerErrorService() {
+    service.errorFromService();
+    return ResponseEntity.ok("この行には到達しません");
   }
 }
