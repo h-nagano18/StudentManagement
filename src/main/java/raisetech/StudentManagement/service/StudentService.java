@@ -2,12 +2,10 @@ package raisetech.StudentManagement.service;
 
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import raisetech.StudentManagement.contloller.converter.StudentConverter;
+import raisetech.StudentManagement.controller.converter.StudentConverter;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
 import raisetech.StudentManagement.domain.StudentDetail;
@@ -49,6 +47,9 @@ public class StudentService {
    */
   public StudentDetail searchStudent(String id) {
     Student student = repository.searchStudent(id);
+    if (student == null) {
+      return null;
+    }
     List<StudentCourse> studentCourse = repository.searchStudentCourse(student.getId());
     return new StudentDetail(student, studentCourse);
   }
@@ -63,7 +64,12 @@ public class StudentService {
   @Transactional
   public StudentDetail registerStudent(StudentDetail studentDetail) {
     Student student = studentDetail.getStudent();
-    
+
+    // 受講生コースが空ならエラー
+    if (studentDetail.getStudentCourseList() == null || studentDetail.getStudentCourseList().isEmpty()) {
+      throw new IllegalStateException("受講生コース情報が空です。最低1つのコースを登録してください。");
+    }
+
     repository.registerStudent(student);
     studentDetail.getStudentCourseList().forEach(studentsCourse -> {
       initStudentsCource(studentsCourse, student);

@@ -1,4 +1,4 @@
-package raisetech.StudentManagement.contloller.converter;
+package raisetech.StudentManagement.controller.converter;
 
 import java.util.ArrayList;
 import java.util.List;
