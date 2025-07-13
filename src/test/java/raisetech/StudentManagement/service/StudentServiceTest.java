@@ -1,5 +1,8 @@
 package raisetech.StudentManagement.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,7 +83,7 @@ class StudentServiceTest {
     // 検証
     verify(repository, times(1)).searchStudent(studentId);
     verify(repository, times(0)).searchStudentCourse(studentId);
-    assert result == null;
+    assertNull(result);
   }
 
   @Test
@@ -107,12 +110,10 @@ class StudentServiceTest {
     StudentDetail studentDetail = new StudentDetail(student, new ArrayList<>());
 
     // 実行・検証
-    try {
+    IllegalStateException e = assertThrows(IllegalStateException.class, () -> {
       sut.registerStudent(studentDetail);
-      assert false : "例外が発生すべき";
-    } catch (IllegalStateException e) {
-      assert e.getMessage().equals("受講生コース情報が空です。最低1つのコースを登録してください。");
-    }
+    });
+    assertEquals("受講生コース情報が空です。最低1つのコースを登録してください。", e.getMessage());
   }
 
   @Test
@@ -147,16 +148,16 @@ class StudentServiceTest {
     sut.registerStudent(studentDetail);
 
     // 検証
-    assert course.getStudentId().equals("1");
+    assertEquals("1", course.getStudentId());
 
     LocalDate startDate = course.getStartDate().toLocalDate();
     LocalDate endDate = course.getEndDate().toLocalDate();
     LocalDate today = LocalDate.now();
 
     // 開始日は登録日と一致するか
-    assert startDate.equals(today) : "開始日が登録日ではありません";
+    assertEquals(today, startDate, "開始日が登録日ではありません");
 
     // 終了日は1年後の同日か
-    assert endDate.equals(today.plusYears(1)) : "終了日が1年後ではありません";
+    assertEquals(today.plusYears(1), endDate, "終了日が1年後ではありません");
   }
 }
