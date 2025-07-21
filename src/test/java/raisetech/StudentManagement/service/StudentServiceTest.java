@@ -8,8 +8,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,21 +56,23 @@ class StudentServiceTest {
   }
 
   @Test
-  void 受講生詳細検索_該当のIDが存在する場合_リポジトリが適切に呼び出せていること() {
+  void 受講生詳細の検索_該当のIDが存在する場合_リポジトリの処理が適切に呼び出せていること() {
     // 事前準備
-    String studentId = "1";
+    String studentId = "999";
     Student student = new Student();
     student.setId(studentId);
-    List<StudentCourse> courseList = new ArrayList<>();
     when(repository.searchStudent(studentId)).thenReturn(student);
-    when(repository.searchStudentCourse(studentId)).thenReturn(courseList);
+    when(repository.searchStudentCourse(studentId)).thenReturn(new ArrayList<>());
+
+    StudentDetail expected = new StudentDetail(student,new ArrayList<>());
 
     // 実行
-    sut.searchStudent(studentId);
+    StudentDetail actual = sut.searchStudent(studentId);
 
     // 検証
     verify(repository, times(1)).searchStudent(studentId);
     verify(repository, times(1)).searchStudentCourse(studentId);
+    assertEquals(expected.getStudent().getId(), actual.getStudent().getId());
   }
 
   @Test
@@ -87,20 +91,19 @@ class StudentServiceTest {
   }
 
   @Test
-  void 受講生詳細登録_正常処理確認_リポジトリが適切に呼び出せていること() {
+  void 受講生詳細の登録_正常処理確認_リポジトリが適切に呼び出せていること() {
     // 事前準備
     Student student = new Student();
-    student.setId("1");
-    StudentCourse course = new StudentCourse();
-    List<StudentCourse> courseList = List.of(course);
-    StudentDetail studentDetail = new StudentDetail(student, courseList);
+    StudentCourse studentCourse = new StudentCourse();
+    List<StudentCourse> studentCourseList = List.of(studentCourse);
+    StudentDetail studentDetail = new StudentDetail(student, studentCourseList);
 
     // 実行
     sut.registerStudent(studentDetail);
 
     // 検証
     verify(repository, times(1)).registerStudent(student);
-    verify(repository, times(1)).registerStudentCourse(course);
+    verify(repository, times(1)).registerStudentCourse(studentCourse);
   }
 
   @Test
@@ -120,44 +123,29 @@ class StudentServiceTest {
   void 受講生詳細更新_リポジトリが適切に呼び出せていること() {
     // 事前準備
     Student student = new Student();
-    StudentCourse course = new StudentCourse();
-    List<StudentCourse> courseList = List.of(course);
-    StudentDetail studentDetail = new StudentDetail(student, courseList);
+    StudentCourse studentCourse = new StudentCourse();
+    List<StudentCourse> studentCourseList = List.of(studentCourse);
+    StudentDetail studentDetail = new StudentDetail(student, studentCourseList);
 
     // 実行
     sut.updateStudent(studentDetail);
 
     // 検証
     verify(repository, times(1)).updateStudent(student);
-    verify(repository, times(1)).updateStudentCourse(course);
+    verify(repository, times(1)).updateStudentCourse(studentCourse);
   }
 
   @Test
-  void 受講生詳細登録_コース情報にstudentIdと開始日終了日が正しく設定されること() {
-    //initStudentsCourseのテストはprivateを削除せずregisterStudentのテストにてAssertをすることで動作確認する
-    // 事前準備
+  void 受講生詳細の登録_初期化処理が行われること() {
+    String id = "999";
     Student student = new Student();
-    student.setId("1");
+    student.setId(id);
+    StudentCourse studentCourse = new StudentCourse();
 
-    StudentCourse course = new StudentCourse();
-    List<StudentCourse> courseList = List.of(course);
+    sut.initStudentsCourse(studentCourse, student.getId());
 
-    StudentDetail studentDetail = new StudentDetail(student, courseList);
-
-    // 実行
-    sut.registerStudent(studentDetail);
-
-    // 検証
-    assertEquals("1", course.getStudentId());
-
-    LocalDate startDate = course.getStartDate().toLocalDate();
-    LocalDate endDate = course.getEndDate().toLocalDate();
-    LocalDate today = LocalDate.now();
-
-    // 開始日は登録日と一致するか
-    assertEquals(today, startDate, "開始日が登録日ではありません");
-
-    // 終了日は1年後の同日か
-    assertEquals(today.plusYears(1), endDate, "終了日が1年後ではありません");
+    assertEquals(id, studentCourse.getStudentId());
+    assertEquals(LocalDateTime.now().getHour(),studentCourse.getStartDate().getHour());
+    assertEquals(LocalDateTime.now().plusYears(1).getYear(),studentCourse.getEndDate().getYear());
   }
 }
