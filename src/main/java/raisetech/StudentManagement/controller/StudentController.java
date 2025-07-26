@@ -47,7 +47,7 @@ public class StudentController {
   @GetMapping("/studentList")
   public List<StudentDetail> getStudentList() {
     return service.searchStudentList();
-   }
+  }
 
   /**
    * 受講生詳細の検索です。IDに紐づく任意の受講生の情報を取得します。
@@ -68,10 +68,10 @@ public class StudentController {
       @Parameter(description = "受講生のID", required = true)
       //例外処理の追加（存在しないID）
       @PathVariable @NotBlank @Pattern(regexp = "^\\d+$") String id) {
-      StudentDetail studentDetail = service.searchStudent(id);
-      if (studentDetail == null) {
-        throw new java.util.NoSuchElementException("受講生ID " + id + " に該当するデータは存在しません");
-      }
+    StudentDetail studentDetail = service.searchStudent(id);
+    if (studentDetail == null) {
+      throw new java.util.NoSuchElementException("受講生ID " + id + " に該当するデータは存在しません");
+    }
     return studentDetail;
   }
 
@@ -87,9 +87,9 @@ public class StudentController {
   @PostMapping("/registerStudent")
   public ResponseEntity<StudentDetail> registerStudent(
       @RequestBody @Valid StudentDetail studentDetail) {
-      StudentDetail responseStudentDetail = service.registerStudent(studentDetail);
-      return ResponseEntity.ok(responseStudentDetail);
-    }
+    StudentDetail responseStudentDetail = service.registerStudent(studentDetail);
+    return ResponseEntity.ok(responseStudentDetail);
+  }
 
   /**
    * 受講生詳細の更新を行います。キャンセルフラグの更新もここで行います（論理削除）
