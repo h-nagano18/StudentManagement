@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +44,24 @@ class StudentControllerTest {
 
   private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
+  // 共通のStudent作成メソッド
+  private Student createValidStudent() {
+    return new Student(
+        "1",                     // id
+        "Yamada Taro",           // name
+        "yamada taro",           // kanaName
+        "yamachan",              // nickname
+        "yamada@gmail.com",    // email
+        "Tokyo",                 // area
+        25,                      // age
+        "male",                  // gender
+        "09012345678",           // telephoneNumber
+        "備考なし",               // remarks
+        false                    // isDeleted
+    );
+  }
+
+  //講義28回で追加
   @Test
   void 受講生詳細の一覧検索ができて空のリストが返ってくること() throws Exception {
     mockMvc.perform(get("/api/v1/studentList"))
@@ -49,24 +70,8 @@ class StudentControllerTest {
 
     verify(service, times(1)).searchStudentList();
   }
-  @Test
-  void 受講生詳細の受講生でIDに適切な値を入力した時に入力チェックに異常が発生しないこと(){
-    Student student = new Student();
-    student.setId("1");
-    student.setName("Yamada Taro");
-    student.setKanaName("yamada taro");
-    student.setNickname("yamachan");
-    student.setEmail("a0001@gmail.com");
-    student.setArea("Sendai");
-    student.setAge(40);
-    student.setGender("male");
-    student.setTelephoneNumber("09011112222");
 
-    Set<ConstraintViolation<Student>> violations = validator.validate(student);
-
-    assertThat(violations.size()).isEqualTo(0);
-  }
-
+  //講義28回で追加
   @Test
   void 受講生詳細の受講生でIDに数字以外を用いた時に入力チェックに掛かること(){
     Student student = new Student();
@@ -82,44 +87,17 @@ class StudentControllerTest {
 
     Set<ConstraintViolation<Student>> violations = validator.validate(student);
 
-    for (ConstraintViolation<Student> violation : violations) {
-      System.out.println("バリデーションエラー: " + violation.getPropertyPath() + " - " + violation.getMessage());
-    }
-    assertThat(violations.size()).isEqualTo(1);
-    assertThat(violations).extracting("message").containsOnly("数字のみ入力するようにしてください。");
-  }
-  @Test
-  void 受講生詳細登録時に名前が空の場合に入力チェックに掛かること() throws Exception {
-    Student student = new Student();
-    student.setId("1");
-    student.setName("");
-    student.setKanaName("yamada taro");
-    student.setNickname("yamachan");
-    student.setEmail("a0001@gmail.com");
-    student.setArea("Sendai");
-    student.setAge(40);
-    student.setGender("male");
-    student.setTelephoneNumber("09011112222");
-
-    Set<ConstraintViolation<Student>> violations = validator.validate(student);
-
-    for (ConstraintViolation<Student> violation : violations) {
-      System.out.println("バリデーションエラー: " + violation.getPropertyPath() + " - " + violation.getMessage());
-    }
-    assertThat(violations.size()).isEqualTo(1);
-    assertThat(violations).extracting("message").containsOnly("名前は必須です");
+    assertEquals(1, violations.size());
   }
 
+  //以下課題28回修正
   @Test
-  void 受講生詳細のIDに紐づく任意の受講生の情報が正しく取得できること() throws Exception {
-    Student student = new Student();
-    student.setId("1");
-    student.setName("Yamada Taro");
+  void IDに紐づく受講生詳細の取得が成功すること() throws Exception {
+    Student student = createValidStudent();
+    StudentDetail detail = new StudentDetail();
+    detail.setStudent(student);
 
-    StudentDetail studentDetail = new StudentDetail();
-    studentDetail.setStudent(student);
-
-    when(service.searchStudent("1")).thenReturn(studentDetail);
+    when(service.searchStudent("1")).thenReturn(detail);
 
     mockMvc.perform(get("/api/v1/student/1"))
         .andExpect(status().isOk())
@@ -128,48 +106,54 @@ class StudentControllerTest {
   }
 
   @Test
-  void 受講生詳細の登録できること() throws Exception {
-    Student student = new Student();
-    student.setName("Test Desu");
-    student.setKanaName("test desu");
-    student.setNickname("test");
-    student.setEmail("test@gamil.com");
-    student.setArea("Tokyo");
-    student.setAge(25);
-    student.setGender("male");
-    student.setTelephoneNumber("09011111111");
+  void 入力チェックに違反しないこと() {
+    Student student = createValidStudent();
+    Set<ConstraintViolation<Student>> violations = validator.validate(student);
+    assertThat(violations.size()).isEqualTo(0);
+  }
 
+  @Test
+  void IDが不正な場合はバリデーションエラーになること() {
+    Student student = createValidStudent();
+    student.setId("テストです。"); // 数字以外を入れて違反させる
+
+    Set<ConstraintViolation<Student>> violations = validator.validate(student);
+    assertThat(violations).extracting("message").containsOnly("数字のみ入力するようにしてください。");
+  }
+
+  @Test
+  void 名前が空文字のときにバリデーションエラーになること() {
+    Student student = createValidStudent();
+    student.setName(""); // 名前だけ空にする
+
+    Set<ConstraintViolation<Student>> violations = validator.validate(student);
+    assertThat(violations).extracting("message").containsOnly("名前は必須です");
+  }
+  @Test
+  void 受講生詳細の登録が成功すること() throws Exception {
     StudentDetail studentDetail = new StudentDetail();
-    studentDetail.setStudent(student);
+    studentDetail.setStudent(createValidStudent());
 
-    String jsonRequest = objectMapper.writeValueAsString(studentDetail);
+    String json = objectMapper.writeValueAsString(studentDetail);
 
     mockMvc.perform(post("/api/v1/registerStudent")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(jsonRequest))
+            .content(json))
         .andExpect(status().isOk());
   }
   @Test
-  void 受講生詳細を更新できること() throws Exception {
-    Student student = new Student();
-    student.setId("1");
-    student.setName("Test Updated");
-    student.setKanaName("test update");
-    student.setNickname("TaroUp");
-    student.setEmail("taro_updated@gamil.com");
-    student.setArea("Osaka");
-    student.setAge(26);
-    student.setGender("male");
-    student.setTelephoneNumber("09011111111");
+  void 受講生詳細の更新が成功すること() throws Exception {
+    Student updatedStudent = createValidStudent();
+    updatedStudent.setName("Yamada Ichiro");
 
-    StudentDetail studentDetail = new StudentDetail();
-    studentDetail.setStudent(student);
-
-    String jsonRequest = objectMapper.writeValueAsString(studentDetail);
+    StudentDetail updatedDetail = new StudentDetail();
+    updatedDetail.setStudent(updatedStudent);
 
     mockMvc.perform(put("/api/v1/updateStudent")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(jsonRequest))
-        .andExpect(status().isOk());
+            .content(objectMapper.writeValueAsString(updatedDetail)))
+        .andExpect(status().isOk())
+        .andExpect(result -> assertThat(result.getResponse().getContentAsString())
+            .isEqualTo("更新処理が成功しました。"));
   }
 }
