@@ -69,9 +69,6 @@ public class StudentController {
       //例外処理の追加（存在しないID）
       @PathVariable @NotBlank @Pattern(regexp = "^\\d+$") String id) {
     StudentDetail studentDetail = service.searchStudent(id);
-    if (studentDetail == null) {
-      throw new java.util.NoSuchElementException("受講生ID " + id + " に該当するデータは存在しません");
-    }
     return studentDetail;
   }
 
