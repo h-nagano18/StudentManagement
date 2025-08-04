@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,9 +22,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.test.web.servlet.MvcResult;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.domain.StudentDetail;
 import raisetech.StudentManagement.service.StudentService;
@@ -86,6 +89,92 @@ class StudentControllerTest {
     Set<ConstraintViolation<Student>> violations = validator.validate(student);
 
     assertEquals(1, violations.size());
+  }
+
+  //①以下講義29回で実装(エラー回避のため、Controllerの一部を修正)
+  @Test
+  void 受講生詳細の検索が実行できて空で返ってくること() throws Exception {
+    String id = "999";
+    mockMvc.perform(get("/api/v1/student/{id}", id))
+        .andExpect(status().isOk());
+
+    verify(service, times(1)).searchStudent(id);
+  }
+
+  //②以下講義29回で実装
+  @Test
+  void 受講生詳細の登録が実行できて空で返ってくること() throws Exception {
+    //リクエストデータは適切に構築して入力チェックの検証も兼ねている。
+    //本来であれば帰りは登録されたデータが入るが、モック化すると意味がないため、レスポンスは作らない。
+    mockMvc.perform(post("/api/v1/registerStudent")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+            {
+              "student": {
+                "name": "Yamada Taro",
+                "kanaName": "yamada taro",
+                "nickname": "yamachan",
+                "email": "a0001@gmail.com",
+                "area": "Sendai",
+                "age": "40",
+                "gender": "male",
+                "telephonenumber": "09011112222",
+                "remark": ""
+              },
+              "studentCourseList": [
+                {
+                  "courseName": "JAVA_Basic"
+                }
+              ]
+            }
+            """))
+        .andExpect(status().isOk());
+
+    verify(service, times(1)).registerStudent(any());
+  }
+
+  //③以下講義29回で実装
+  @Test
+  void 受講生詳細の更新が実行できて空で返ってくること() throws Exception {
+    //リクエストデータは適切に構築して入力チェックの検証も兼ねている。
+    mockMvc.perform(put("/api/v1/updateStudent")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+            {
+              "student": {
+                "id": "1",
+                "name": "Yamada Taro",
+                "kanaName": "yamada taro",
+                "nickname": "yamachan",
+                "email": "a0001@gmail.com",
+                "area": "Sendai",
+                "age": "40",
+                "gender": "male",
+                "telephonenumber": "09011112222",
+                "remark": ""
+              },
+              "studentCourseList": [
+                {
+                  "id": "1",
+                  "studentId": "1",
+                  "courseName": "JAVA_Basic",
+                  "startDate": "2023-06-15T00:00:00",
+                  "endDate": "2025-06-30T00:00:00"
+                }
+              ]
+            }
+            """))
+        .andExpect(status().isOk());
+
+    verify(service, times(1)).updateStudent(any());
+  }
+
+  //④以下講義29回で実装
+  @Test
+  void 受講生詳細の例外APIが実行できてステータスが400で返ってくること() throws Exception {
+    mockMvc.perform(get("/api/v1/triggerErrorController"))
+        .andExpect(status().is4xxClientError())
+        .andExpect(content().string("【不正な引数】このリクエストはController内での不正です"));
   }
 
   //以下課題28回修正

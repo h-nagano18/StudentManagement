@@ -11,6 +11,8 @@ import lombok.Setter;
  * 受講生コースを扱うオブジェクト。
  */
 @Schema(description = "受講生コース情報")
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 public class StudentCourse {
