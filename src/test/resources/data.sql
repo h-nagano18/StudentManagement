@@ -14,3 +14,14 @@ VALUES (1, 'Java_Basic', '2025-01-10 09:00:00', '2025-03-31 17:00:00'),
        (4, 'Database_Design', '2025-03-01 09:00:00', '2025-06-01 17:00:00'),
        (5, 'Cloud_Computing', '2025-04-01 09:00:00', '2025-07-01 17:00:00'),
        (5, 'DevOps_Fundamentals', '2025-07-01 09:00:00', '2025-09-30 17:00:00');
+
+INSERT INTO course_status (student_course_id, status)
+VALUES
+  (1, 'ONGOING'),
+  (2, 'COMPLETED'),
+  (3, 'PRE_APPLIED'),
+  (4, 'APPLIED'),
+  (5, 'ONGOING'),
+  (6, 'PRE_APPLIED'),
+  (7, 'COMPLETED'),
+  (8, 'APPLIED');

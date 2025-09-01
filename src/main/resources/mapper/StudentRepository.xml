@@ -25,6 +25,32 @@
     SELECT * FROM students_courses WHERE student_id = #{studentId}
   </select>
 
+  <!-- 課題31回で追加:受講生コースIDに紐づくコース申込状況を検索 -->
+  <select id="searchCourseStatusByCourseId" parameterType="String" resultType="raisetech.StudentManagement.data.CourseStatus">
+    SELECT *
+    FROM course_status
+    WHERE student_course_id = #{courseId}
+  </select>
+
+  <!-- 課題31回で追加: 名前・ステータス検索 -->
+  <select id="searchByConditions" resultType="raisetech.StudentManagement.data.Student">
+    SELECT DISTINCT s.*
+    FROM students s
+    LEFT JOIN students_courses sc ON s.id = sc.student_id
+    LEFT JOIN course_status cs ON sc.id = cs.student_course_id
+    <where>
+      <if test="name != null and name != ''">
+        s.name LIKE CONCAT('%', #{name}, '%')
+      </if>
+      <if test="status != null and status != ''">
+        <if test="name != null and name != ''">
+          AND
+        </if>
+        cs.status = #{status}
+      </if>
+    </where>
+  </select>
+
   <!-- 受講生の新規登録 -->
   <insert id="registerStudent" parameterType="raisetech.StudentManagement.data.Student" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO students (
@@ -45,6 +71,17 @@
     )
   </insert>
 
+  <!-- 受講生コース申込状況（ステータス）を登録（常に PRE_APPLIED） -->
+  <insert id="registerCourseStatus" parameterType="raisetech.StudentManagement.data.CourseStatus" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO course_status (
+    student_course_id,
+    status
+    ) VALUES (
+    #{studentCourseId},
+    'PRE_APPLIED'
+    )
+  </insert>
+
   <!-- 受講生の更新 -->
   <update id="updateStudent" parameterType="raisetech.StudentManagement.data.Student">
     UPDATE students SET
@@ -57,7 +94,7 @@
     gender = #{gender},
     telephone_number = #{telephoneNumber},
     remarks = #{remarks},
-    is_deleted = #{deleted}
+    is_deleted = #{isDeleted}
     WHERE id = #{id}
   </update>
 
@@ -66,6 +103,13 @@
     UPDATE students_courses SET
     course_name = #{courseName}
     WHERE id = #{id}
+  </update>
+
+  <!--  課題31回で追加 コース申込状況（ステータス）の更新 -->
+  <update id="updateCourseStatus" parameterType="raisetech.StudentManagement.data.CourseStatus">
+    UPDATE course_status SET
+    status = #{status}
+    WHERE student_course_id = #{studentCourseId}
   </update>
 
 </mapper>

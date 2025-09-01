@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import raisetech.StudentManagement.controller.converter.StudentConverter;
+import raisetech.StudentManagement.data.CourseStatus;
+import raisetech.StudentManagement.data.CourseStatus.CourseStatusType;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
 import raisetech.StudentManagement.domain.StudentDetail;
@@ -62,7 +64,7 @@ class StudentServiceTest {
     when(repository.searchStudent(studentId)).thenReturn(student);
     when(repository.searchStudentCourse(studentId)).thenReturn(new ArrayList<>());
 
-    StudentDetail expected = new StudentDetail(student,new ArrayList<>());
+    StudentDetail expected = new StudentDetail(student, new ArrayList<>(), new ArrayList<>());
 
     // 実行
     StudentDetail actual = sut.searchStudent(studentId);
@@ -87,14 +89,31 @@ class StudentServiceTest {
     verify(repository, times(0)).searchStudentCourse(studentId);
     assertNull(result);
   }
+  //課題31回で追加
+  @Test
+  void 受講生詳細検索_名前やステータスで検索できること() {
+    // 事前準備
+    String name = "Yamada";
+    String status = "APPLIED";
+
+    when(repository.searchByConditions(name, status)).thenReturn(new ArrayList<>());
+
+    // 実行
+    sut.searchStudentsByConditions(name, status);
+
+    // 検証
+    verify(repository, times(1)).searchByConditions(name, status);
+  }
 
   @Test
   void 受講生詳細の登録_正常処理確認_リポジトリが適切に呼び出せていること() {
     // 事前準備
     Student student = new Student();
     StudentCourse studentCourse = new StudentCourse();
+    CourseStatus courseStatus = new CourseStatus();
     List<StudentCourse> studentCourseList = List.of(studentCourse);
-    StudentDetail studentDetail = new StudentDetail(student, studentCourseList);
+    List<CourseStatus> courseStatusList = List.of(courseStatus);
+    StudentDetail studentDetail = new StudentDetail(student, studentCourseList, courseStatusList);
 
     // 実行
     sut.registerStudent(studentDetail);
@@ -108,7 +127,7 @@ class StudentServiceTest {
   void 受講生詳細登録_異常処理確認_コース情報が空の場合_例外が発生すること() {
     // 事前準備
     Student student = new Student();
-    StudentDetail studentDetail = new StudentDetail(student, new ArrayList<>());
+    StudentDetail studentDetail = new StudentDetail(student, new ArrayList<>(), new ArrayList<>());
 
     // 実行・検証
     IllegalStateException e = assertThrows(IllegalStateException.class, () -> {
@@ -122,8 +141,11 @@ class StudentServiceTest {
     // 事前準備
     Student student = new Student();
     StudentCourse studentCourse = new StudentCourse();
+    CourseStatus courseStatus = new CourseStatus();
+    studentCourse.setCourseStatus(courseStatus);
     List<StudentCourse> studentCourseList = List.of(studentCourse);
-    StudentDetail studentDetail = new StudentDetail(student, studentCourseList);
+    List<CourseStatus> courseStatusList = List.of(courseStatus);
+    StudentDetail studentDetail = new StudentDetail(student, studentCourseList, courseStatusList);
 
     // 実行
     sut.updateStudent(studentDetail);
@@ -131,6 +153,35 @@ class StudentServiceTest {
     // 検証
     verify(repository, times(1)).updateStudent(student);
     verify(repository, times(1)).updateStudentCourse(studentCourse);
+    verify(repository, times(1)).updateCourseStatus(courseStatus);
+  }
+
+  //課題31回で追加
+  @Test
+  void 受講生詳細登録_ServiceでCourseStatusがPRE_APPLIEDになること() {
+    Student student = new Student();
+    StudentCourse studentCourse = new StudentCourse();
+    StudentDetail studentDetail = new StudentDetail(student, List.of(studentCourse), null);
+
+    sut.registerStudent(studentDetail);
+
+    // Service 内でセットされた CourseStatus が PRE_APPLIED か確認
+    assertEquals(CourseStatusType.PRE_APPLIED, studentCourse.getCourseStatus().getStatus());
+  }
+
+  @Test
+  void 受講生詳細更新_コースステータスが更新されること() {
+    Student student = new Student();
+    StudentCourse studentCourse = new StudentCourse();
+    CourseStatus courseStatus = new CourseStatus();
+    studentCourse.setCourseStatus(courseStatus);
+    List<StudentCourse> studentCourseList = List.of(studentCourse);
+    List<CourseStatus> courseStatusList = List.of(courseStatus);
+    StudentDetail studentDetail = new StudentDetail(student, studentCourseList, courseStatusList);
+
+    sut.updateStudent(studentDetail);
+
+    verify(repository).updateCourseStatus(courseStatus);
   }
 
   @Test

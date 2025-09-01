@@ -3,6 +3,7 @@ package raisetech.StudentManagement.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
+import java.util.List;
 import java.util.Set;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.springframework.test.web.servlet.MvcResult;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.domain.StudentDetail;
 import raisetech.StudentManagement.service.StudentService;
@@ -101,42 +101,78 @@ class StudentControllerTest {
     verify(service, times(1)).searchStudent(id);
   }
 
-  //②以下講義29回で実装
+  //課題31回で追加
   @Test
-  void 受講生詳細の登録が実行できて空で返ってくること() throws Exception {
-    //リクエストデータは適切に構築して入力チェックの検証も兼ねている。
-    //本来であれば帰りは登録されたデータが入るが、モック化すると意味がないため、レスポンスは作らない。
-    mockMvc.perform(post("/api/v1/registerStudent")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""
-            {
-              "student": {
-                "name": "Yamada Taro",
-                "kanaName": "yamada taro",
-                "nickname": "yamachan",
-                "email": "a0001@gmail.com",
-                "area": "Sendai",
-                "age": "40",
-                "gender": "male",
-                "telephonenumber": "09011112222",
-                "remark": ""
-              },
-              "studentCourseList": [
-                {
-                  "courseName": "JAVA_Basic"
-                }
-              ]
-            }
-            """))
-        .andExpect(status().isOk());
+  void 名前とステータスで検索できること() throws Exception {
+    // モックの戻り値を準備
+    StudentDetail detail = new StudentDetail();
+    detail.setStudent(createValidStudent());
+    when(service.searchStudentsByConditions("Taro", "APPLIED"))
+        .thenReturn(List.of(detail));
 
-    verify(service, times(1)).registerStudent(any());
+    mockMvc.perform(get("/api/v1/search")
+            .param("name", "Taro")
+            .param("status", "APPLIED"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].student.name").value("Yamada Taro"));
+
+    verify(service, times(1)).searchStudentsByConditions("Taro", "APPLIED");
   }
 
-  //③以下講義29回で実装
+  @Test
+  void 条件なしで検索できること() throws Exception {
+    when(service.searchStudentsByConditions(null, null))
+        .thenReturn(List.of());
+
+    mockMvc.perform(get("/api/v1/search"))
+        .andExpect(status().isOk());
+
+    verify(service, times(1)).searchStudentsByConditions(null, null);
+  }
+
+  @Test
+  void 名前のみで検索できること() throws Exception {
+    StudentDetail detail = new StudentDetail();
+    detail.setStudent(createValidStudent());
+
+    when(service.searchStudentsByConditions("Taro", null))
+        .thenReturn(List.of(detail));
+
+    mockMvc.perform(get("/api/v1/search").param("name", "Taro"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].student.name").value("Yamada Taro"));
+  }
+
+  @Test
+  void ステータスのみで検索できること() throws Exception {
+    StudentDetail detail = new StudentDetail();
+    detail.setStudent(createValidStudent());
+
+    when(service.searchStudentsByConditions(null, "APPLIED"))
+        .thenReturn(List.of(detail));
+
+    mockMvc.perform(get("/api/v1/search").param("status", "APPLIED"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].student.name").value("Yamada Taro"));
+  }
+
+  @Test
+  void 名前やステータス検索で不正なステータスを渡すと400が返ること() throws Exception {
+    // 存在しないステータスを指定
+    String invalidStatus = "INVALID_STATUS";
+
+    mockMvc.perform(get("/api/v1/search")
+            .param("name", "Taro")
+            .param("status", "INVALID_STATUS"))
+        .andExpect(status().isBadRequest());
+
+    // Service は呼ばれないことを確認
+    verify(service, times(0)).searchStudentsByConditions(any(), any());
+  }
+
+  //②以下講義29回で実装=>31回課題で修正
   @Test
   void 受講生詳細の更新が実行できて空で返ってくること() throws Exception {
-    //リクエストデータは適切に構築して入力チェックの検証も兼ねている。
     mockMvc.perform(put("/api/v1/updateStudent")
             .contentType(MediaType.APPLICATION_JSON)
             .content("""
@@ -150,8 +186,8 @@ class StudentControllerTest {
                 "area": "Sendai",
                 "age": "40",
                 "gender": "male",
-                "telephonenumber": "09011112222",
-                "remark": ""
+                "telephoneNumber": "09011112222",
+                "remarks": ""
               },
               "studentCourseList": [
                 {
@@ -159,7 +195,10 @@ class StudentControllerTest {
                   "studentId": "1",
                   "courseName": "JAVA_Basic",
                   "startDate": "2023-06-15T00:00:00",
-                  "endDate": "2025-06-30T00:00:00"
+                  "endDate": "2025-06-30T00:00:00",
+                  "courseStatus": {
+                    "status": "APPLIED"
+                  }
                 }
               ]
             }

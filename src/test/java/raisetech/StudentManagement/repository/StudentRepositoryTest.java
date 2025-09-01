@@ -8,6 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.jdbc.Sql;
+import raisetech.StudentManagement.data.CourseStatus;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
 
@@ -83,18 +85,19 @@ class StudentRepositoryTest {
     assertThat(actual).hasSize(6);
   }
 
-  //課題30で追加 => 修正(開始日・終了日も更新確認を行う)
+  //課題30で追加 => 修正(開始日・終了日も更新確認を行う)=>課題31で一部修正
   @Test
   void 受講生コース情報の新規登録が行えること() {
     LocalDateTime start = LocalDateTime.of(2025, 4, 1, 9, 0, 0);
     LocalDateTime end = LocalDateTime.of(2026, 4, 1, 17, 0, 0);
 
     StudentCourse studentCourse = new StudentCourse(
-        null,
-        "1",
-        "AWS_Basic",
-        start,
-        end
+        null,               // id
+        "1",                // studentId
+        "AWS_Basic",        // courseName
+        start,              // startDate
+        end,                // endDate
+        null                // courseStatus
     );
 
     sut.registerStudentCourse(studentCourse);
@@ -145,7 +148,8 @@ class StudentRepositoryTest {
         course.getStudentId(),
         "Advanced Java",
         course.getStartDate(),
-        course.getEndDate()
+        course.getEndDate(),
+        course.getCourseStatus() // 元の status を保持
     );
 
     sut.updateStudentCourse(updatedCourse);
@@ -193,7 +197,8 @@ class StudentRepositoryTest {
         "1",
         "Java_Basic",
         LocalDateTime.of(2025, 1, 10, 9, 0, 0),
-        LocalDateTime.of(2025, 3, 31, 17, 0, 0)
+        LocalDateTime.of(2025, 3, 31, 17, 0, 0),
+        null // status は今回は未設定
     );
 
     StudentCourse actual = sut.searchStudentCourse("1").get(0);
