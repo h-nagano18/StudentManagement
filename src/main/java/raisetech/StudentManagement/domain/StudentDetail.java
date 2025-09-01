@@ -1,5 +1,6 @@
 package raisetech.StudentManagement.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import raisetech.StudentManagement.data.CourseStatus;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
 
@@ -25,4 +27,9 @@ public class StudentDetail {
 
   @Valid
   private List<StudentCourse> studentCourseList;
+
+  //課題31回で追加
+  @JsonIgnore
+  @Valid
+  private List<CourseStatus> courseStatusList;
 }

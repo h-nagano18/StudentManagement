@@ -12,10 +12,12 @@ import raisetech.StudentManagement.data.StudentCourse;
 import raisetech.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
+import raisetech.StudentManagement.repository.StudentRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 class StudentConverterTest {
 
@@ -23,7 +25,7 @@ class StudentConverterTest {
 
   @BeforeEach
   void before(){
-    sut =new StudentConverter();
+    sut = new StudentConverter();
   }
 
   //講義30回で修正①
@@ -95,7 +97,8 @@ class StudentConverterTest {
     StudentCourse course = new StudentCourse(
         "1", "1", "Java",
         LocalDateTime.of(2025, 1, 1, 9, 0),
-        LocalDateTime.of(2025, 3, 31, 17, 0)
+        LocalDateTime.of(2025, 3, 31, 17, 0),
+        null
     );
 
     List<StudentDetail> result = sut.convertStudentDetails(List.of(student), List.of(course));

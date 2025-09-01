@@ -27,4 +27,7 @@ public class StudentCourse {
   private LocalDateTime startDate;
   @Schema(description = "終了日")
   private LocalDateTime endDate;
+  //課題31回で追加
+  @Schema(description = "コース申込状況")
+  private CourseStatus courseStatus;
 }
