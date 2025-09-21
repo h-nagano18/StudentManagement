@@ -1,4 +1,6 @@
 package raisetech.StudentManagement.repository;
+import org.apache.ibatis.annotations.Param;
+import raisetech.StudentManagement.data.CourseStatus;
 import raisetech.StudentManagement.data.Student;
 import java.util.List;
 
@@ -10,6 +12,8 @@ import raisetech.StudentManagement.data.StudentCourse;
  */
 @Mapper
 public interface StudentRepository {
+
+  // ==================== 検索 ====================
 
   /**
    * 受講生の全件検索を行います。
@@ -33,13 +37,36 @@ public interface StudentRepository {
   List<StudentCourse> searchStudentCourseList();
 
   /**
-   *受講生Dに紐づく受講生コース情報を検索します。
+   *受講生IDに紐づく受講生情報を検索します。
    *
    * @param studentId　受講生ID
    * @return　受講生IDに紐づく受講生コース情報
    */
   List<StudentCourse> searchStudentCourse(String studentId);
 
+  //課題31回で追加
+  /**
+   *受講生コースIdに紐づくコース申込状況（ステータス）を検索します。
+   *
+   * @return　受講生コースIdに紐づくコース申込状況（ステータス）
+   */
+  List<CourseStatus> searchCourseStatusByCourseId(String courseId);
+
+  /**
+   * 受講生IDに紐づく全コース申込状況をを検索します。
+   */
+  List<CourseStatus> searchCourseStatusByStudentId(String studentId);
+
+  //課題31回で追加
+  /**
+   *★追加: 名前や申込状況（ステータス）に紐づく受講生情報を検索します。
+   *
+   * @return　名前や申込状況（ステータス）に紐づく受講生情報
+   */
+  List<Student> searchByConditions(@Param("name") String name, @Param("status") String status);
+
+
+  // ==================== 新規登録 ====================
   /**
    * 受講生を新規登録します。IDに関しては自動採番を行う。
    *
@@ -55,6 +82,14 @@ public interface StudentRepository {
   void registerStudentCourse(StudentCourse studentCourse);
 
   /**
+   * 受講生コース申込状況（ステータス）を登録します。
+   *
+   * @param status 受講生コース申込状況（ステータス)
+   */
+  int registerCourseStatus(CourseStatus status);
+
+  // ==================== 更新 ====================
+  /**
    * 受講生を更新します。
    *
    * @param student　受講生
@@ -67,4 +102,11 @@ public interface StudentRepository {
    * @param studentCourse　受講生コース情報
    */
   void updateStudentCourse(StudentCourse studentCourse);
+
+  /**
+   * コース申込状況を更新します。
+   *
+   * @param status 受講生コース申込状況（ステータス)
+   */
+  int updateCourseStatus(CourseStatus status);
 }

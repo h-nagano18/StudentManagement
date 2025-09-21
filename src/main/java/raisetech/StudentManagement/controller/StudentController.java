@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import java.util.Arrays;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import raisetech.StudentManagement.controller.converter.StudentConverter;
+import raisetech.StudentManagement.data.CourseStatus;
+import raisetech.StudentManagement.data.Student;
+import raisetech.StudentManagement.data.StudentCourse;
 import raisetech.StudentManagement.domain.StudentDetail;
 import raisetech.StudentManagement.service.StudentService;
 /**
@@ -70,6 +78,27 @@ public class StudentController {
       @PathVariable @NotBlank @Pattern(regexp = "^\\d+$") String id) {
     StudentDetail studentDetail = service.searchStudent(id);
     return studentDetail;
+  }
+
+  /**
+   * 受講生詳細の検索です。名前などに紐づく任意の受講生の情報を取得します。検索API（拡張）。（課題31で追加）
+   *
+   */
+  @GetMapping("/search")
+  public List<StudentDetail> searchStudents(
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) String status) {
+
+    // status が指定されていれば Enum チェック
+    if (status != null) {
+      boolean valid = Arrays.stream(CourseStatus.CourseStatusType.values())
+          .anyMatch(s -> s.name().equals(status));
+      if (!valid) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "不正なステータスが指定されました");
+      }
+    }
+
+    return service.searchStudentsByConditions(name, status);
   }
 
   /**

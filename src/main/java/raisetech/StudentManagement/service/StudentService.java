@@ -1,11 +1,17 @@
 package raisetech.StudentManagement.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import org.springframework.transaction.annotation.Transactional;
 import raisetech.StudentManagement.controller.converter.StudentConverter;
+import raisetech.StudentManagement.data.CourseStatus;
+import raisetech.StudentManagement.data.CourseStatus.CourseStatusType;
 import raisetech.StudentManagement.data.Student;
 import raisetech.StudentManagement.data.StudentCourse;
 import raisetech.StudentManagement.domain.StudentDetail;
@@ -35,7 +41,15 @@ public class StudentService {
   public List<StudentDetail> searchStudentList() {
     List<Student> studentList = repository.search();
     List<StudentCourse> studentCourseList = repository.searchStudentCourseList();
-    return  converter.convertStudentDetails(studentList, studentCourseList);
+
+    // ★ 課題31で追加: Service側でCourseStatusを取得してセットする
+    for (StudentCourse course : studentCourseList) {
+      List<CourseStatus> statuses = repository.searchCourseStatusByCourseId(course.getId());
+      if (!statuses.isEmpty()) {
+        course.setCourseStatus(statuses.get(0));
+      }
+    }
+    return converter.convertStudentDetails(studentList, studentCourseList);
   }
 
   /**
@@ -51,7 +65,57 @@ public class StudentService {
       return null;
     }
     List<StudentCourse> studentCourse = repository.searchStudentCourse(student.getId());
-    return new StudentDetail(student, studentCourse);
+
+    // ★  課題31で追加: Service側でCourseStatusを取得してセットする
+    for (StudentCourse course : studentCourse) {
+      List<CourseStatus> statuses = repository.searchCourseStatusByCourseId(course.getId());
+      if (!statuses.isEmpty()) {
+        course.setCourseStatus(statuses.get(0));
+      }
+    }
+
+    List<CourseStatus> courseStatuses = studentCourse.stream()
+        .map(StudentCourse::getCourseStatus)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+
+    return new StudentDetail(student, studentCourse, courseStatuses);
+  }
+
+  /**
+   * 受講生詳細検索です。
+   * 名前または申込状況（ステータス）紐づく受講生情報を取得したあと、その受講生に紐づく受講生コース情報を取得して設定します。
+   */
+  public List<StudentDetail> searchStudentsByConditions(String name, String status) {
+    // 条件に合う Student 一覧を取得
+    List<Student> students = repository.searchByConditions(name, status);
+
+    if (students.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    // 学生IDを抽出してコース情報取得
+    List<String> studentIds = students.stream()
+        .map(Student::getId)
+        .collect(Collectors.toList());
+
+    List<StudentCourse> studentCourses = new ArrayList<>();
+    for (String id : studentIds) {
+      List<StudentCourse> courses = repository.searchStudentCourse(id);
+
+      // ★ CourseStatus をセット
+      for (StudentCourse course : courses) {
+        List<CourseStatus> statuses = repository.searchCourseStatusByCourseId(course.getId());
+        if (!statuses.isEmpty()) {
+          course.setCourseStatus(statuses.get(0));
+        }
+      }
+
+      studentCourses.addAll(courses);
+    }
+
+    // Converter で StudentDetail にまとめて返却
+    return converter.convertStudentDetails(students, studentCourses);
   }
 
   /**
@@ -70,12 +134,25 @@ public class StudentService {
       throw new IllegalStateException("受講生コース情報が空です。最低1つのコースを登録してください。");
     }
 
+    // 1. 受講生登録
     repository.registerStudent(student);
-    studentDetail.getStudentCourseList().forEach(studentsCourse -> {
-      initStudentsCourse(studentsCourse, student.getId());
-      repository.registerStudentCourse(studentsCourse);
-    });
-    return  studentDetail;
+
+    // 2. 受講生コース登録
+    for (StudentCourse course : studentDetail.getStudentCourseList()) {
+      initStudentsCourse(course, student.getId());
+
+      // コース登録
+      repository.registerStudentCourse(course);
+
+      // コースステータス登録を PRE_APPLIED にセットして DB に反映
+      CourseStatus initialStatus = new CourseStatus(null, course.getId(), CourseStatus.CourseStatusType.PRE_APPLIED);
+      repository.registerCourseStatus(initialStatus);
+
+      // Java オブジェクトにも反映
+      course.setCourseStatus(initialStatus);
+    }
+
+    return studentDetail;
   }
 
   /**
@@ -93,15 +170,25 @@ public class StudentService {
   }
 
   /**
-   * 受講生詳細の更新を行います。受講生と受講生コース情報をそれぞれ更新します。
+   * 受講生詳細の更新を行います。
+   * 受講生・受講生コース・申込状況をそれぞれ更新します。
    *
-   * @param studentDetail　受講生詳細
+   * @param studentDetail 受講生詳細
    */
   @Transactional
   public void updateStudent(StudentDetail studentDetail) {
+    // 受講生情報を更新
     repository.updateStudent(studentDetail.getStudent());
-    studentDetail.getStudentCourseList()
-        .forEach(studentCourse -> repository.updateStudentCourse(studentCourse));
+
+    // コース情報を更新
+    studentDetail.getStudentCourseList().forEach(studentCourse -> {
+      repository.updateStudentCourse(studentCourse);
+
+      // コースに紐づくステータスがある場合は更新
+      if (studentCourse.getCourseStatus() != null) {
+        repository.updateCourseStatus(studentCourse.getCourseStatus());
+      }
+    });
   }
 
   /**

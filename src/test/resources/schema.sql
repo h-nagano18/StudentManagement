@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS students_courses
     start_date TIMESTAMP,
     end_date TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS course_status
+(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_course_id INT NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (student_course_id) REFERENCES students_courses(id)
+);
