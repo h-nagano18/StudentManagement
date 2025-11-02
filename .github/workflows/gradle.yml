@@ -77,8 +77,3 @@ jobs:
           else
           sudo systemctl start StudentManagement
           fi
-                  
-
-
-
-
